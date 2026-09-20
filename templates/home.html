@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Trend Tracker</title>
+    <script src="/static/js/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: {
+                background: 'oklch(0.19 0.04 260)',
+                foreground: 'oklch(0.96 0.01 250)',
+                card: 'oklch(0.24 0.045 260)',
+                primary: 'oklch(0.68 0.14 240)',
+                primaryFg: 'oklch(0.14 0.03 260)',
+                mutedFg: 'oklch(0.72 0.03 250)',
+                accent: 'oklch(0.78 0.12 210)',
+                destructive: 'oklch(0.65 0.22 25)',
+                success: 'oklch(0.72 0.14 155)',
+                warning: 'oklch(0.80 0.15 75)',
+                border: 'oklch(0.34 0.03 260)',
+            } } }
+        };
+    </script>
+    <link rel="stylesheet" href="/static/css/components.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-background text-foreground font-sans">
+
+<!-- Nav -->
+<nav class="sticky top-0 z-30 backdrop-blur-xl bg-background/70 border-b border-border/60">
+    <div class="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2 font-semibold tracking-tight">
+            <span class="grid h-8 w-8 place-items-center rounded-lg bg-[image:var(--gradient-accent)] text-primaryFg">
+                <i data-lucide="stethoscope" class="h-4 w-4"></i>
+            </span>
+            Disease Trend Tracker
+        </a>
+        <div class="hidden md:flex items-center gap-8 text-sm text-mutedFg">
+            <a href="#features" class="hover:text-foreground transition">Features</a>
+            <a href="#how" class="hover:text-foreground transition">How it works</a>
+            <a href="#trust" class="hover:text-foreground transition">Clinical basis</a>
+        </div>
+        <button data-bs-toggle="modal" data-bs-target="#loginModal"
+            class="inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-accent)] px-5 py-2 text-sm font-semibold text-primaryFg shadow-[var(--shadow-glow)] hover:opacity-90 transition">
+            Doctor login <i data-lucide="arrow-right" class="h-4 w-4"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="relative overflow-hidden">
+    <img src="/static/assets/hero-bg.jpg" alt="" class="absolute inset-0 h-full w-full object-cover opacity-70">
+    <div class="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background"></div>
+    <div class="relative mx-auto max-w-7xl px-6 py-24 md:py-36 grid md:grid-cols-2 gap-12 items-center">
+        <div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-mutedFg backdrop-blur">
+                <span class="h-1.5 w-1.5 rounded-full bg-accent animate-pulse"></span>
+                AI clinical decision support
+            </span>
+            <h1 class="mt-6 text-5xl md:text-6xl font-bold tracking-tight leading-[1.05]">
+                See the trend<br>
+                <span class="bg-[image:var(--gradient-accent)] bg-clip-text text-transparent">before the crisis.</span>
+            </h1>
+            <p class="mt-6 text-lg text-mutedFg max-w-lg leading-relaxed">
+                Turn monthly lab values into decisions. Detect worsening patients, get
+                Gemini-powered recommendations, and forecast the next 3 months in under
+                two minutes per patient.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+                <button data-bs-toggle="modal" data-bs-target="#loginModal"
+                    class="inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-accent)] px-6 py-3 text-sm font-semibold text-primaryFg shadow-[var(--shadow-glow)] hover:-translate-y-0.5 transition">
+                    Enter dashboard <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                </button>
+                <a href="#features" class="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-6 py-3 text-sm font-semibold hover:bg-card transition backdrop-blur">
+                    See how it works
+                </a>
+            </div>
+            <div class="mt-10 grid grid-cols-3 gap-6 max-w-md">
+                <div><div class="text-2xl font-bold">88 min</div><div class="text-xs text-mutedFg mt-1">saved daily</div></div>
+                <div><div class="text-2xl font-bold">200+</div><div class="text-xs text-mutedFg mt-1">patients / doctor</div></div>
+                <div><div class="text-2xl font-bold">3 mo</div><div class="text-xs text-mutedFg mt-1">ML forecast</div></div>
+            </div>
+        </div>
+
+        <!-- Preview card -->
+        <div class="relative">
+            <div class="absolute -inset-4 bg-[image:var(--gradient-accent)] opacity-20 blur-3xl rounded-3xl"></div>
+            <div class="relative rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-6 shadow-[var(--shadow-card)]">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <div class="text-xs text-mutedFg">Ramesh Kumar · P001</div>
+                        <div class="font-semibold">Type 2 Diabetes · HbA1c</div>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-destructive/15 text-destructive border border-destructive/30">
+                        HIGH RISK
+                    </span>
+                </div>
+
+                <div class="rounded-xl border border-border bg-background/60 p-3">
+                    <svg viewBox="0 0 320 90" class="w-full h-24">
+                        <defs>
+                            <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="oklch(0.78 0.12 210)" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="oklch(0.78 0.12 210)" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,68 L40,60 L80,52 L120,44 L160,36 L200,28 L200,90 L0,90 Z" fill="url(#sparkGrad)"/>
+                        <path d="M0,68 L40,60 L80,52 L120,44 L160,36 L200,28" fill="none" stroke="oklch(0.78 0.12 210)" stroke-width="2"/>
+                        <path d="M200,28 L240,20 L280,12 L320,5" fill="none" stroke="oklch(0.65 0.22 25)" stroke-width="2" stroke-dasharray="4 4"/>
+                    </svg>
+                    <div class="flex justify-between text-[10px] text-mutedFg mt-1">
+                        <span>Feb</span><span>Apr</span><span>Jun</span><span class="text-destructive">Forecast →</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 rounded-xl border border-accent/30 bg-accent/10 p-4">
+                    <div class="flex items-center gap-2 text-accent text-xs font-semibold uppercase tracking-wide">
+                        <i data-lucide="brain" class="h-3.5 w-3.5"></i> AI recommendation
+                    </div>
+                    <p class="mt-2 text-sm text-foreground/90 leading-relaxed">
+                        HbA1c rising 1.5 points over 6 months. Consider adding SGLT2 inhibitor
+                        and reinforce dietary counseling. Follow-up in 4 weeks.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="py-24 border-t border-border/60">
+    <div class="mx-auto max-w-7xl px-6">
+        <div class="max-w-2xl">
+            <div class="text-xs uppercase tracking-widest text-accent font-semibold">Features</div>
+            <h2 class="mt-3 text-4xl font-bold tracking-tight">Built for doctors managing hundreds of patients.</h2>
+        </div>
+        <div class="mt-14 grid md:grid-cols-3 gap-4">
+            {% set features = [
+                ("trending-up", "Automatic trend detection", "Every parameter is scored as improving, stable, or worsening across visits."),
+                ("line-chart", "3-month ML forecast", "Project HbA1c, glucose and BP forward — see where the patient is heading."),
+                ("brain", "AI recommendations", "Actionable clinical suggestions tailored to each patient's real trajectory."),
+                ("activity", "Risk stratification", "Instant triage: green, amber, red — spot who needs attention today."),
+                ("shield-check", "Multi-doctor secure login", "Each doctor sees only their patients. Data stays private and audited."),
+                ("clock", "Two-minute reviews", "Cut a 2-hour ward round to under 30 minutes without missing anyone."),
+            ] %}
+            {% for icon, title, body in features %}
+            <div class="group rounded-2xl border border-border bg-card p-6 hover:border-accent/50 hover:-translate-y-1 transition-all duration-300">
+                <div class="grid h-10 w-10 place-items-center rounded-lg bg-[image:var(--gradient-accent)] text-primaryFg">
+                    <i data-lucide="{{ icon }}" class="h-5 w-5"></i>
+                </div>
+                <h3 class="mt-5 font-semibold">{{ title }}</h3>
+                <p class="mt-2 text-sm text-mutedFg leading-relaxed">{{ body }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section id="how" class="py-24 bg-card/40 border-y border-border/60">
+    <div class="mx-auto max-w-7xl px-6 grid md:grid-cols-2 gap-16 items-center">
+        <div>
+            <div class="text-xs uppercase tracking-widest text-accent font-semibold">Workflow</div>
+            <h2 class="mt-3 text-4xl font-bold tracking-tight">From lab value to decision, in seconds.</h2>
+            <div class="mt-10 space-y-6">
+                {% set steps = [
+                    ("01", "Log the visit", "Enter monthly HbA1c, fasting glucose, BP — whatever you track."),
+                    ("02", "See the trend", "The engine flags worsening parameters across the last 6 months."),
+                    ("03", "Read the AI", "AI reads the trajectory and returns a clinical recommendation."),
+                    ("04", "Forecast forward", "Project the next 3 months and act before crisis, not after."),
+                ] %}
+                {% for n, t, d in steps %}
+                <div class="flex gap-5">
+                    <div class="text-accent font-mono text-sm pt-1">{{ n }}</div>
+                    <div>
+                        <div class="font-semibold">{{ t }}</div>
+                        <div class="text-sm text-mutedFg mt-1">{{ d }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="trust" class="rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-card)]">
+            <blockquote class="text-2xl font-medium leading-snug tracking-tight">
+                "Early detection saves lives. A doctor seeing 30 patients a day needs
+                to know who needs urgent attention — in two minutes, not two hours."
+            </blockquote>
+            <div class="mt-6 text-sm text-mutedFg">
+                Clinical basis: built on real datasets used in peer-reviewed disease
+                research. Not a toy demo.
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-24">
+    <div class="mx-auto max-w-5xl px-6 text-center">
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">Ready to see who needs you most today?</h2>
+        <p class="mt-4 text-mutedFg max-w-xl mx-auto">Log in and triage your entire patient list before your first coffee.</p>
+        <button data-bs-toggle="modal" data-bs-target="#loginModal"
+            class="mt-8 inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-accent)] px-8 py-3.5 text-sm font-semibold text-primaryFg shadow-[var(--shadow-glow)] hover:-translate-y-0.5 transition">
+            Open dashboard <i data-lucide="arrow-right" class="h-4 w-4"></i>
+        </button>
+    </div>
+</section>
+
+<footer class="border-t border-border/60 py-8 text-center text-xs text-mutedFg">
+    © 2026 Disease Trend Tracker · Clinical decision support for doctors
+</footer>
+
+<!-- LOGIN MODAL (unchanged functionality, restyled) -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="font-semibold flex items-center gap-2"><i data-lucide="lock" class="h-4 w-4 text-accent"></i> Doctor Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="loginError" class="alert alert-danger d-none"></div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Username</label>
+                    <input type="text" class="form-control" id="username" placeholder="Enter username">
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Enter password">
+                </div>
+                <button class="w-full rounded-full bg-[image:var(--gradient-accent)] text-primaryFg font-semibold py-2.5 shadow-[var(--shadow-glow)] hover:opacity-90 transition" onclick="submitLogin()">
+                    Login →
+                </button>
+            </div>
+            <div class="modal-footer justify-center">
+                <p class="text-mutedFg text-sm mb-0">
+                    New doctor? <a href="/register" class="text-accent font-semibold">Register here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/modal.js"></script>
+<script src="/static/js/home.js"></script>
+<script>lucide.createIcons();</script>
+
+</body>
+</html>

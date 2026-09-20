@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ patient.patient_name }} — Trends</title>
+    <script src="/static/js/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: {
+                background: 'oklch(0.19 0.04 260)', foreground: 'oklch(0.96 0.01 250)',
+                card: 'oklch(0.24 0.045 260)', primary: 'oklch(0.68 0.14 240)',
+                primaryFg: 'oklch(0.14 0.03 260)', mutedFg: 'oklch(0.72 0.03 250)',
+                accent: 'oklch(0.78 0.12 210)', destructive: 'oklch(0.65 0.22 25)',
+                success: 'oklch(0.72 0.14 155)', warning: 'oklch(0.80 0.15 75)',
+                border: 'oklch(0.34 0.03 260)',
+            } } }
+        };
+    </script>
+    <link rel="stylesheet" href="/static/css/components.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-background text-foreground font-sans">
+
+<header class="sticky top-0 z-20 backdrop-blur-xl bg-background/80 border-b border-border">
+    <div class="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
+        <a href="/dashboard" class="inline-flex items-center gap-2 text-sm text-mutedFg hover:text-foreground transition">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i> All patients
+        </a>
+        <a href="/" class="flex items-center gap-2 font-semibold text-sm">
+            <span class="grid h-7 w-7 place-items-center rounded-lg bg-[image:var(--gradient-accent)] text-primaryFg">
+                <i data-lucide="stethoscope" class="h-3.5 w-3.5"></i>
+            </span>
+            Disease Trend Tracker
+        </a>
+    </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-6 py-10">
+
+    <!-- Patient header -->
+    <div class="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-[var(--shadow-card)]">
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+            <div class="flex min-w-0 items-center gap-4">
+                <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[image:var(--gradient-accent)] text-primaryFg text-lg font-bold">
+                    {{ patient.patient_name[:2].upper() }}
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-mutedFg">{{ patient.patient_id }}</div>
+                    <h1 class="truncate text-2xl md:text-3xl font-bold tracking-tight">{{ patient.patient_name }}</h1>
+                    <div class="text-sm text-mutedFg mt-1">Last visit tracked below</div>
+                </div>
+            </div>
+            <button data-bs-toggle="modal" data-bs-target="#addVisitModal"
+                class="shrink-0 inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-accent)] px-4 py-2 text-sm font-semibold text-primaryFg shadow-[var(--shadow-glow)] hover:-translate-y-0.5 transition">
+                <i data-lucide="plus" class="h-4 w-4"></i> Add visit
+            </button>
+        </div>
+    </div>
+
+    {% if disease_data %}
+    <!-- Disease pills -->
+    <div class="mt-8 flex flex-wrap gap-2" id="diseasePills">
+        {% for disease in disease_data %}
+        <button onclick="showDisease('{{ loop.index }}')" data-disease-pill="{{ loop.index }}"
+            class="disease-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition {% if loop.first %}active{% endif %}">
+            {{ disease.disease_name }}
+            {% if disease.risk == "HIGH" %}
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-destructive/15 text-destructive border-destructive/30">high</span>
+            {% elif disease.risk == "IMPROVING" %}
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-success/15 text-success border-success/30">improving</span>
+            {% else %}
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-warning/15 text-warning border-warning/30">stable</span>
+            {% endif %}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- Range picker -->
+    <div class="mt-6 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Parameter trends</h2>
+        <div class="flex gap-1 rounded-full border border-border bg-card p-1 text-xs">
+            <a href="?months=3" class="px-3 py-1.5 rounded-full font-semibold transition {% if months=='3' %}active-range{% else %}text-mutedFg hover:text-foreground{% endif %}">3m</a>
+            <a href="?months=6" class="px-3 py-1.5 rounded-full font-semibold transition {% if months=='6' %}active-range{% else %}text-mutedFg hover:text-foreground{% endif %}">6m</a>
+            <a href="?months=12" class="px-3 py-1.5 rounded-full font-semibold transition {% if months=='12' %}active-range{% else %}text-mutedFg hover:text-foreground{% endif %}">12m</a>
+            <a href="?months=all" class="px-3 py-1.5 rounded-full font-semibold transition {% if months=='all' %}active-range{% else %}text-mutedFg hover:text-foreground{% endif %}">All</a>
+        </div>
+    </div>
+
+    <div class="mt-6 grid lg:grid-cols-[1fr_360px] gap-6">
+        <div class="space-y-6">
+            {% for disease in disease_data %}
+            <div class="disease-panel {% if not loop.first %}hidden{% endif %}" data-disease-panel="{{ loop.index }}">
+
+                {% for param in disease.parameters %}
+                <div class="rounded-2xl border border-border bg-card p-6 mb-6">
+                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-mutedFg uppercase tracking-wider">{{ param }}</div>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span class="text-3xl font-bold">{{ disease.visits[-1].get(param, "—") }}</span>
+                            </div>
+                        </div>
+                        {% set trend = disease.trends.get(param, "stable") %}
+                        {% if trend == "worsening" or trend == "spike" %}
+                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-destructive bg-destructive/10">
+                            <i data-lucide="trending-up" class="h-3 w-3"></i> {{ "Spike" if trend == "spike" else "Worsening" }}
+                        </span>
+                        {% elif trend == "improving" %}
+                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-success bg-success/10">
+                            <i data-lucide="trending-down" class="h-3 w-3"></i> Improving
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-mutedFg bg-foreground/5">
+                            <i data-lucide="minus" class="h-3 w-3"></i> Stable
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-5" style="height:224px;">
+                        <canvas id="chart-{{ loop.index }}-{{ disease.disease_id }}"></canvas>
+                    </div>
+
+                    <div class="mt-4 flex items-center gap-4 text-xs text-mutedFg">
+                        <span class="inline-flex items-center gap-1.5"><span class="h-0.5 w-4 bg-accent inline-block"></span> Observed</span>
+                        <span class="inline-flex items-center gap-1.5"><span class="h-0.5 w-4 border-t border-dashed border-destructive inline-block"></span> Forecast (next 3 mo)</span>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Visits table -->
+                <div class="rounded-2xl border border-border bg-card p-6 overflow-hidden">
+                    <h3 class="font-semibold">Recent visits</h3>
+                    <div class="mt-4 overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="text-xs text-mutedFg uppercase tracking-wider">
+                                <tr class="border-b border-border">
+                                    <th class="text-left py-3 px-3 font-medium">Date</th>
+                                    {% for param in disease.parameters %}
+                                    <th class="text-left py-3 px-3 font-medium">{{ param }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for v in disease.visits|reverse %}
+                                <tr class="border-b border-border/50 last:border-0">
+                                    <td class="py-3 px-3">{{ v.visit_date }}</td>
+                                    {% for param in disease.parameters %}
+                                    <td class="py-3 px-3 font-mono">{{ v.get(param, "—") }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- AI panel -->
+        <aside class="space-y-4 lg:sticky lg:top-24 h-fit">
+            {% for disease in disease_data %}
+            <div class="ai-panel {% if not loop.first %}hidden{% endif %}" data-ai-panel="{{ loop.index }}">
+                <div class="relative rounded-2xl overflow-hidden border border-accent/40 p-6 bg-card">
+                    <div class="absolute inset-0 bg-[image:var(--gradient-accent)] opacity-10 pointer-events-none"></div>
+                    <div class="relative">
+                        <div class="flex items-center gap-2 text-accent text-xs font-bold uppercase tracking-wider">
+                            <i data-lucide="brain" class="h-4 w-4"></i> Gemini AI recommendation
+                        </div>
+                        <p class="mt-4 text-sm leading-7" id="ai-rec-{{ loop.index }}">{{ disease.ai_rec }}</p>
+                        <small class="text-mutedFg mt-4 block text-xs">
+                            ⚠️ Decision support only — not a diagnosis. Final decision rests with the treating physician.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-border bg-card p-6 mt-4">
+                    <div class="text-xs uppercase tracking-wider text-mutedFg">Risk assessment</div>
+                    <div class="mt-3">
+                        {% if disease.risk == "HIGH" %}
+                        <span class="inline-flex text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border bg-destructive/15 text-destructive border-destructive/30">high risk</span>
+                        {% elif disease.risk == "IMPROVING" %}
+                        <span class="inline-flex text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border bg-success/15 text-success border-success/30">improving</span>
+                        {% else %}
+                        <span class="inline-flex text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border bg-warning/15 text-warning border-warning/30">stable</span>
+                        {% endif %}
+                    </div>
+                    <ul class="mt-5 space-y-3 text-sm">
+                        {% for param in disease.parameters %}
+                        <li class="flex items-center justify-between">
+                            <span class="text-mutedFg">{{ param }}</span>
+                            {% set trend = disease.trends.get(param, "stable") %}
+                            {% if trend == "worsening" or trend == "spike" %}
+                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-destructive bg-destructive/10">
+                                <i data-lucide="trending-up" class="h-3 w-3"></i> {{ "Spike" if trend == "spike" else "Worsening" }}
+                            </span>
+                            {% elif trend == "improving" %}
+                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-success bg-success/10">
+                                <i data-lucide="trending-down" class="h-3 w-3"></i> Improving
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-mutedFg bg-foreground/5">
+                                <i data-lucide="minus" class="h-3 w-3"></i> Stable
+                            </span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </aside>
+    </div>
+
+    {% else %}
+    <div class="mt-10 rounded-2xl border border-border bg-card p-8 text-center text-mutedFg">
+        No disease data found for this patient.
+    </div>
+    {% endif %}
+
+</main>
+
+<!-- ── ADD VISIT MODAL ── -->
+<div class="modal fade" id="addVisitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="font-semibold flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4 text-accent"></i> Add New Visit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="visitSuccess" class="alert alert-success d-none">✅ Visit saved successfully!</div>
+                <div id="visitError" class="alert alert-danger d-none"></div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Select Disease</label>
+                    <select class="form-select" id="visit_disease_id" onchange="loadDiseaseParams()">
+                        {% for disease in disease_data %}
+                        <option value="{{ disease.disease_id }}" data-params='{{ disease.parameters|tojson }}'>{{ disease.disease_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Visit Date</label>
+                    <input type="date" class="form-control" id="visit_date">
+                </div>
+                <div id="visit_param_fields"></div>
+                <input type="hidden" id="visit_patient_id" value="{{ patient.patient_id }}">
+                <button class="w-full rounded-full bg-[image:var(--gradient-accent)] text-primaryFg font-semibold py-2.5 mt-2 shadow-[var(--shadow-glow)] hover:opacity-90 transition"
+                        onclick="submitVisit()">💾 Save Visit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showDisease(idx) {
+        document.querySelectorAll("[data-disease-pill]").forEach(el => el.classList.toggle("active", el.dataset.diseasePill === idx));
+        document.querySelectorAll("[data-disease-panel]").forEach(el => el.classList.toggle("hidden", el.dataset.diseasePanel !== idx));
+        document.querySelectorAll("[data-ai-panel]").forEach(el => el.classList.toggle("hidden", el.dataset.aiPanel !== idx));
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDiseaseParams();
+        document.querySelectorAll("[id^='ai-rec-']").forEach(el => {
+            el.innerHTML = formatAIText(el.innerText);
+        });
+    });
+</script>
+
+<script src="/static/js/modal.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/patient.js"></script>
+<script>
+    const diseaseData = {{ disease_data | tojson }};
+    diseaseData.forEach((disease, di) => {
+        const labels = disease.visits.map(v => v.visit_date);
+        disease.parameters.forEach((param, pi) => {
+            const canvasId = `chart-${pi + 1}-${disease.disease_id}`;
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const values = disease.visits.map(v => v[param] ?? null);
+            const forecast = disease.forecasts[param] || [];
+            renderSingleChart(canvas, labels, values, forecast, param);
+        });
+    });
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

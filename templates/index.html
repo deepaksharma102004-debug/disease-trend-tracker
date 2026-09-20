@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Disease Trend Tracker</title>
+    <script src="/static/js/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: {
+                background: 'oklch(0.19 0.04 260)', foreground: 'oklch(0.96 0.01 250)',
+                card: 'oklch(0.24 0.045 260)', primary: 'oklch(0.68 0.14 240)',
+                primaryFg: 'oklch(0.14 0.03 260)', mutedFg: 'oklch(0.72 0.03 250)',
+                accent: 'oklch(0.78 0.12 210)', destructive: 'oklch(0.65 0.22 25)',
+                success: 'oklch(0.72 0.14 155)', warning: 'oklch(0.80 0.15 75)',
+                border: 'oklch(0.34 0.03 260)',
+            } } }
+        };
+    </script>
+    <link rel="stylesheet" href="/static/css/components.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+</head>
+<body class="min-h-screen bg-background text-foreground font-sans">
+
+<!-- Top bar -->
+<header class="sticky top-0 z-20 backdrop-blur-xl bg-background/80 border-b border-border">
+    <div class="mx-auto max-w-7xl px-6 h-16 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+        <a href="/" class="flex min-w-0 items-center gap-2 font-semibold">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-accent)] text-primaryFg">
+                <i data-lucide="stethoscope" class="h-4 w-4"></i>
+            </span>
+            <span class="truncate">Disease Trend Tracker</span>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="hidden sm:flex items-center gap-2 text-sm">
+                <div class="h-8 w-8 rounded-full bg-[image:var(--gradient-accent)] grid place-items-center text-primaryFg font-semibold text-xs">
+                    {{ doctor_name.split(" ")[1][0] if doctor_name else "D" }}
+                </div>
+                <div class="leading-tight">
+                    <div class="font-medium">{{ doctor_name }}</div>
+                    <div class="text-xs text-mutedFg">Diabetologist</div>
+                </div>
+            </div>
+            <button data-bs-toggle="modal" data-bs-target="#addPatientModal"
+                class="inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-accent)] px-4 py-2 text-sm font-semibold text-primaryFg shadow-[var(--shadow-glow)] hover:-translate-y-0.5 transition">
+                <i data-lucide="user-plus" class="h-4 w-4"></i> <span class="hidden sm:inline">New patient</span>
+            </button>
+            <button data-bs-toggle="modal" data-bs-target="#addVisitModal"
+                class="inline-flex items-center gap-2 rounded-full bg-[image:var(--gradient-accent)] px-4 py-2 text-sm font-semibold text-primaryFg shadow-[var(--shadow-glow)] hover:-translate-y-0.5 transition">
+                <i data-lucide="plus" class="h-4 w-4"></i> <span class="hidden sm:inline">Add visit</span>
+            </button>
+            <a href="/logout" class="p-2 rounded-full border border-border text-mutedFg hover:text-foreground hover:bg-card transition" title="Logout">
+                <i data-lucide="log-out" class="h-4 w-4"></i>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-6 py-10">
+
+    <div class="flex items-end justify-between flex-wrap gap-6">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
+                Good morning, {{ doctor_name.split(" ")[1] if doctor_name else "Doctor" }}.
+            </h1>
+            <p class="mt-2 text-mutedFg">
+                You have <span class="text-foreground font-semibold">{{ stats.high_risk }} high-risk</span> patients needing review today.
+            </p>
+        </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <i data-lucide="users" class="h-5 w-5 text-accent"></i>
+            <div class="mt-3 text-3xl font-bold">{{ stats.total }}</div>
+            <div class="text-xs text-mutedFg mt-1">Total patients</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <i data-lucide="alert-triangle" class="h-5 w-5 text-destructive"></i>
+            <div class="mt-3 text-3xl font-bold">{{ stats.high_risk }}</div>
+            <div class="text-xs text-mutedFg mt-1">High risk</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <i data-lucide="activity" class="h-5 w-5 text-success"></i>
+            <div class="mt-3 text-3xl font-bold">{{ stats.improving }}</div>
+            <div class="text-xs text-mutedFg mt-1">Improving</div>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5">
+            <i data-lucide="calendar-check" class="h-5 w-5 text-accent"></i>
+            <div class="mt-3 text-3xl font-bold">{{ stats.visits_this_month }}</div>
+            <div class="text-xs text-mutedFg mt-1">Visits this month</div>
+        </div>
+    </div>
+
+    <!-- Search + filter -->
+    <div class="mt-10 grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center">
+        <div class="relative min-w-0">
+            <i data-lucide="search" class="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-mutedFg"></i>
+            <input id="patientSearch" oninput="filterPatients()" placeholder="Search patient by name or ID…"
+                class="w-full h-11 rounded-full border border-border bg-card pl-11 pr-4 text-sm outline-none focus:border-accent transition">
+        </div>
+        <div class="flex gap-1 rounded-full border border-border bg-card p-1 text-xs">
+            <button onclick="setFilter('all')" data-filter-btn="all" class="filter-pill px-3 py-1.5 rounded-full font-semibold capitalize transition">All</button>
+            <button onclick="setFilter('HIGH')" data-filter-btn="HIGH" class="filter-pill px-3 py-1.5 rounded-full font-semibold capitalize transition">High</button>
+            <button onclick="setFilter('STABLE')" data-filter-btn="STABLE" class="filter-pill px-3 py-1.5 rounded-full font-semibold capitalize transition">Stable</button>
+            <button onclick="setFilter('IMPROVING')" data-filter-btn="IMPROVING" class="filter-pill px-3 py-1.5 rounded-full font-semibold capitalize transition">Improving</button>
+        </div>
+    </div>
+
+    <!-- Patient grid -->
+    <div id="patientGrid" class="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for p in patients %}
+        <a href="/patient/{{ p.patient_id }}"
+           class="patient-card group rounded-2xl border border-border bg-card p-5 hover:border-accent/60 hover:-translate-y-1 transition-all duration-300"
+           data-name="{{ p.patient_name|lower }}" data-id="{{ p.patient_id|lower }}" data-risk="{{ p.worst_risk }}">
+            <div class="flex items-start justify-between">
+                <div class="min-w-0">
+                    <div class="text-xs text-mutedFg">{{ p.patient_id }}</div>
+                    <div class="mt-1 font-semibold text-lg truncate">{{ p.patient_name }}</div>
+                    <div class="text-xs text-mutedFg mt-0.5">Last visit {{ p.last_visit }}</div>
+                </div>
+                {% if p.worst_risk == "HIGH" %}
+                <span class="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border bg-destructive/15 text-destructive border-destructive/30">high</span>
+                {% elif p.worst_risk == "IMPROVING" %}
+                <span class="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border bg-success/15 text-success border-success/30">improving</span>
+                {% else %}
+                <span class="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border bg-warning/15 text-warning border-warning/30">stable</span>
+                {% endif %}
+            </div>
+
+            <div class="mt-5 space-y-2">
+                {% for d in p.diseases %}
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2 min-w-0">
+                        {% if d.trend == "worsening" or d.trend == "spike" %}
+                        <i data-lucide="trending-up" class="h-3.5 w-3.5 text-destructive"></i>
+                        {% elif d.trend == "improving" %}
+                        <i data-lucide="trending-down" class="h-3.5 w-3.5 text-success"></i>
+                        {% else %}
+                        <i data-lucide="minus" class="h-3.5 w-3.5 text-mutedFg"></i>
+                        {% endif %}
+                        <span class="truncate">{{ d.disease_name }}</span>
+                    </div>
+                    {% if d.first_param %}
+                    <span class="text-xs text-mutedFg">{{ d.first_param }}: {{ d.first_param_value }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-border/60 flex items-center justify-between text-sm">
+                <span class="text-mutedFg">
+                    {% if p.worst_risk == "HIGH" %}Trending worse{% elif p.worst_risk == "IMPROVING" %}Improving{% else %}Stable{% endif %}
+                </span>
+                <span class="inline-flex items-center gap-1 font-semibold text-accent">
+                    View trends <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+                </span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div id="noResults" class="mt-16 text-center text-mutedFg hidden">No patients match.</div>
+</main>
+
+<!-- ── ADD PATIENT MODAL ── -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="font-semibold flex items-center gap-2"><i data-lucide="user-plus" class="h-4 w-4 text-accent"></i> Register New Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="patientSuccess" class="alert alert-success d-none">✅ Patient registered successfully!</div>
+                <div id="patientError" class="alert alert-danger d-none"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block font-semibold text-sm mb-1 text-mutedFg">Patient ID</label>
+                        <input type="text" class="form-control" id="new_patient_id" placeholder="e.g. P005">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-sm mb-1 text-mutedFg">Patient Name</label>
+                        <input type="text" class="form-control" id="new_patient_name" placeholder="e.g. Suresh Gupta">
+                    </div>
+                </div>
+
+                <hr class="border-border my-4">
+                <div id="diseases_container"></div>
+
+                <button class="w-full border border-border text-foreground font-semibold py-2 rounded-full mb-3 hover:border-accent hover:text-accent transition"
+                        onclick="addDiseaseBlock()">+ Add Disease</button>
+                <button class="w-full rounded-full bg-[image:var(--gradient-accent)] text-primaryFg font-semibold py-2.5 shadow-[var(--shadow-glow)] hover:opacity-90 transition"
+                        onclick="submitNewPatient()">➕ Register Patient</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── ADD VISIT MODAL ── -->
+<div class="modal fade" id="addVisitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="font-semibold flex items-center gap-2"><i data-lucide="plus" class="h-4 w-4 text-accent"></i> Add New Visit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="visitSuccess" class="alert alert-success d-none">✅ Visit saved successfully!</div>
+                <div id="visitError" class="alert alert-danger d-none"></div>
+
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Select Patient</label>
+                    <select class="form-select" id="visit_patient_id" onchange="loadPatientDiseases()">
+                        <option value="">-- Select Patient --</option>
+                        {% for p in patients %}
+                        <option value="{{ p.patient_id }}">{{ p.patient_id }} — {{ p.patient_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Select Disease</label>
+                    <select class="form-select" id="visit_disease_id" onchange="loadDiseaseParams()">
+                        <option value="">-- Select Patient First --</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold text-sm mb-1 text-mutedFg">Visit Date</label>
+                    <input type="date" class="form-control" id="visit_date">
+                </div>
+                <div id="visit_param_fields"></div>
+
+                <button class="w-full rounded-full bg-[image:var(--gradient-accent)] text-primaryFg font-semibold py-2.5 mt-2 shadow-[var(--shadow-glow)] hover:opacity-90 transition"
+                        onclick="submitVisit()">💾 Save Visit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/modal.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>lucide.createIcons();</script>
+
+</body>
+</html>

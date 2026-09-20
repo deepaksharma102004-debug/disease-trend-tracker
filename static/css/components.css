@@ -1,0 +1,156 @@
+:root {
+    --radius: 0.75rem;
+    --background: oklch(0.19 0.04 260);
+    --foreground: oklch(0.96 0.01 250);
+    --card: oklch(0.24 0.045 260);
+    --primary: oklch(0.68 0.14 240);
+    --primary-foreground: oklch(0.14 0.03 260);
+    --muted-foreground: oklch(0.72 0.03 250);
+    --accent: oklch(0.78 0.12 210);
+    --accent-foreground: oklch(0.14 0.03 260);
+    --destructive: oklch(0.65 0.22 25);
+    --success: oklch(0.72 0.14 155);
+    --warning: oklch(0.80 0.15 75);
+    --border: oklch(0.34 0.03 260);
+    --gradient-accent: linear-gradient(135deg, oklch(0.68 0.14 240), oklch(0.78 0.12 210));
+    --shadow-glow: 0 20px 60px -20px oklch(0.68 0.14 240 / 0.45);
+    --shadow-card: 0 10px 40px -12px oklch(0.10 0.02 260 / 0.55);
+
+    /* legacy aliases so old pages (patient/dashboard) don't break until we convert them */
+    --navy: var(--primary);
+    --navy-deep: oklch(0.14 0.03 260);
+    --teal: var(--accent);
+    --teal-glow: oklch(0.85 0.10 210);
+    --cream: var(--foreground);
+    --danger: var(--destructive);
+}
+
+/* Modal, tabs, alerts, badges, forms — update to new tokens */
+.modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-card); }
+/* .modal-header { background: transparent; border-bottom: 1px solid var(--border); color: var(--foreground); padding: 1.25rem 1.5rem; } */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+    color: var(--foreground);
+    padding: 1.25rem 1.5rem;
+}
+.modal-footer { border-top: 1px solid var(--border); }
+.btn-close { filter: none; color: var(--muted-foreground); }
+.form-control, .form-select {
+    background: var(--background); color: var(--foreground);
+    border: 1px solid var(--border); border-radius: 10px; padding: .6rem .9rem;
+}
+.form-control:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px oklch(0.78 0.12 210 / 20%); }
+.modal-backdrop { background: oklch(0.10 0.02 260 / 70%); position: fixed; inset: 0; z-index: 1050; }
+
+/* Core show/hide behavior — modal hidden until .show class toggle ho */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    overflow-y: auto;
+}
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;   /* ye horizontal centering guarantee karta hai */
+    padding: 1.5rem 1rem;
+}
+.modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    z-index: 1056;
+    margin: 0;   /* margin: auto hata diya, ab flex parent centering karega */
+}
+.modal-dialog.modal-lg { max-width: 760px; }
+
+/* login modal ko alag width chahiye to yahan override karo */
+#loginModal .modal-dialog {
+    max-width: 650px;
+}ginModal 
+
+/* modal-dialog-centered ab redundant hai kyunki parent .modal.show already center kar raha hai */
+.modal-dialog.modal-dialog-centered {
+    display: block;
+    min-height: auto;
+}
+#loginModal .modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#loginModal .modal-body > div {
+    width: 100%;
+    max-width: 380px;
+}
+
+#loginModal .form-control,
+#loginModal .form-select {
+    display: block;
+    width: 100%;
+}
+
+#loginModal .modal-body button {
+    max-width: 380px;
+}
+
+#loginModal .modal-footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    margin-top: 0.5rem;
+}
+
+#addPatientModal .modal-body,
+#addVisitModal .modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#addPatientModal .modal-body > div,
+#addPatientModal .modal-body > button,
+#addVisitModal .modal-body > div,
+#addVisitModal .modal-body > button {
+    width: 100%;
+    max-width: 420px;
+}
+
+#addPatientModal .form-control,
+#addPatientModal .form-select,
+#addVisitModal .form-control,
+#addVisitModal .form-select {
+    display: block;
+    width: 100%;
+}
+
+.d-none { display: none !important; }
+.alert { padding: .75rem 1rem; border-radius: 10px; margin-bottom: 1rem; font-size: .9rem; }
+.alert-success { background: oklch(0.72 0.14 155 / 15%); color: var(--success); border: 1px solid oklch(0.72 0.14 155 / 30%); }
+.alert-danger { background: oklch(0.65 0.22 25 / 15%); color: var(--destructive); border: 1px solid oklch(0.65 0.22 25 / 30%); }
+
+.filter-pill { color: var(--muted-foreground, oklch(0.72 0.03 250)); }
+.filter-pill.active { background: var(--gradient-accent); color: var(--primary-foreground); }
+
+.disease-pill {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted-foreground, oklch(0.72 0.03 250));
+}
+.disease-pill.active {
+    background: var(--gradient-accent);
+    color: var(--primary-foreground);
+    border-color: transparent;
+    box-shadow: var(--shadow-glow);
+}
+.active-range {
+    background: var(--gradient-accent);
+    color: var(--primary-foreground);
+}
