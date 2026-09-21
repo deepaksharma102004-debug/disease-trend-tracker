@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 from modules.data_manager import (
     load_all_patients, get_patient,
     load_patient_diseases, add_patient, add_disease,
@@ -61,7 +62,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         for doctor in load_doctors():
-            if doctor["username"] == username and str(doctor["password"]) == password:
+            if doctor["username"] == username and check_password_hash(doctor["password"], password):
                 session["doctor_id"]   = doctor["doctor_id"]
                 session["doctor_name"] = doctor["doctor_name"]
                 return redirect(url_for("dashboard"))
@@ -71,7 +72,7 @@ def login():
 def api_login():
     body = request.get_json()
     for doctor in load_doctors():
-        if doctor["username"] == body["username"] and str(doctor["password"]) == body["password"]:
+        if doctor["username"] == body["username"] and check_password_hash(doctor["password"], body["password"]):
             session["doctor_id"]   = doctor["doctor_id"]
             session["doctor_name"] = doctor["doctor_name"]
             return jsonify({"status": "success"})
@@ -98,7 +99,7 @@ def register():
                 doctor_id=new_id,
                 doctor_name=doctor_name,
                 username=username,
-                password=password
+                password=generate_password_hash(password)
             ))
             db.session.commit()
             success = "✅ Registration successful! Please login."
