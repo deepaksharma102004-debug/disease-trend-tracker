@@ -1,5 +1,7 @@
 // ── Add Patient — Disease Blocks ──────────────────────
 
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+
 let diseaseBlocks = [];
 
 function addDiseaseBlock() {
@@ -66,23 +68,44 @@ function removeParam(index, param) {
 
 function renderParamTags(index) {
     const container = document.getElementById(`param_tags_${index}`);
-    container.innerHTML = diseaseBlocks[index].params.map(p => `
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/15 text-accent border border-accent/30 px-3 py-1 text-xs font-semibold">
-            ${p}
-            <span style="cursor:pointer;" onclick="removeParam(${index}, '${p}')">✕</span>
-        </span>
-    `).join("");
+    container.innerHTML = "";
+    diseaseBlocks[index].params.forEach(p => {
+        const tag = document.createElement("span");
+        tag.className = "inline-flex items-center gap-1.5 rounded-full bg-accent/15 text-accent border border-accent/30 px-3 py-1 text-xs font-semibold";
+        tag.append(document.createTextNode(p + " "));
+
+        const removeBtn = document.createElement("span");
+        removeBtn.style.cursor = "pointer";
+        removeBtn.textContent = "✕";
+        removeBtn.addEventListener("click", () => removeParam(index, p));
+
+        tag.appendChild(removeBtn);
+        container.appendChild(tag);
+    });
 }
 
 function renderParamFields(index) {
     const container = document.getElementById(`param_fields_${index}`);
-    container.innerHTML = diseaseBlocks[index].params.map(p => `
-        <div class="mb-4">
-            <label class="block font-semibold text-sm mb-1 text-mutedFg">${p}</label>
-            <input type="number" step="any" class="form-control"
-                id="val_${index}_${p}" placeholder="Enter value">
-        </div>
-    `).join("");
+    container.innerHTML = "";
+    diseaseBlocks[index].params.forEach(p => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "mb-4";
+
+        const label = document.createElement("label");
+        label.className = "block font-semibold text-sm mb-1 text-mutedFg";
+        label.textContent = p;
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "any";
+        input.className = "form-control";
+        input.id = `val_${index}_${p}`;
+        input.placeholder = "Enter value";
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        container.appendChild(wrapper);
+    });
 }
 
 
@@ -118,7 +141,7 @@ function submitNewPatient() {
 
     fetch("/api/add-patient", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF_TOKEN },
         body: JSON.stringify({ patient_id, patient_name, diseases })
     })
     .then(res => res.json())
@@ -212,7 +235,7 @@ function submitVisit() {
 
     fetch("/api/add-visit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF_TOKEN },
         body: JSON.stringify({ patient_id, disease_id, visit_date, param_values })
     })
     .then(res => res.json())

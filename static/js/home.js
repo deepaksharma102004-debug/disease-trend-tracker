@@ -10,7 +10,10 @@ function submitLogin() {
 
     fetch("/api/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content
+        },
         body: JSON.stringify({ username, password })
     })
     .then(res => res.json())

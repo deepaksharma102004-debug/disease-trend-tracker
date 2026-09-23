@@ -19,8 +19,17 @@ diseaseData.forEach((disease) => {
         renderSingleChart(canvas, labels, values, forecast, param);
     });
 });
-function formatAIText(text) {
+function escapeHTML(text) {
     return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function formatAIText(text) {
+    return escapeHTML(text)
         // Numbered headings 1. **Heading:** → spaced-out heading block
         .replace(/(\d+)\.\s*\*\*(.*?)\*\*/g,
             "<div style='margin-top:22px; margin-bottom:8px;'>" +

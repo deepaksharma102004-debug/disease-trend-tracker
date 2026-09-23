@@ -118,3 +118,16 @@ def load_disease_visits(patient_id, disease_id):
         result.append(row)
 
     return result
+
+
+def delete_patient_cascade(patient_id):
+    """
+    Removes a patient and everything linked to it (diseases, visits).
+    Used to roll back a partially-created patient when add-patient fails
+    midway (e.g. a bad disease/visit value after the patient row was
+    already committed).
+    """
+    Visit.query.filter_by(patient_id=patient_id).delete()
+    Disease.query.filter_by(patient_id=patient_id).delete()
+    Patient.query.filter_by(patient_id=patient_id).delete()
+    db.session.commit()

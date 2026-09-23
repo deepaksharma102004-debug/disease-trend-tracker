@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask_wtf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from modules.data_manager import (
     load_all_patients, get_patient,
     load_patient_diseases, add_patient, add_disease,
-    add_visit, load_disease_visits, get_disease_parameters
+    add_visit, load_disease_visits, get_disease_parameters,
+    delete_patient_cascade
 )
 from modules.trend_engine import detect_trend, get_risk_badge
 from modules.ai_advisor import get_ai_recommendation
@@ -16,6 +18,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+csrf = CSRFProtect(app)
 
 from modules.db import db
 from modules.models import Doctor, Patient, Disease, Visit
@@ -46,6 +49,16 @@ def load_doctors():
          "username": d.username, "password": d.password}
         for d in doctors
     ]
+
+def _cleanup_failed_patient(patient_id):
+    """Best-effort rollback: removes a patient left half-created after
+    add-patient fails partway through. Never lets a cleanup error mask
+    the original error being handled."""
+    try:
+        db.session.rollback()
+        delete_patient_cascade(patient_id)
+    except Exception:
+        db.session.rollback()
 
 
 # ── Auth Routes ───────────────────────────────────────

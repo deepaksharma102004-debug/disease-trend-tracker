@@ -49,6 +49,7 @@
         {% endif %}
 
         <form method="POST" action="/register" class="w-full max-w-[380px]">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-4">
                 <label class="block font-semibold text-sm mb-1 text-mutedFg">Full Name</label>
                 <input type="text" name="doctor_name" class="form-control w-full"
